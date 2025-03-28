@@ -196,7 +196,7 @@ export default function ResultsScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1E1E1E" />
       <View style={styles.content}>
-        <Text style={styles.title}>Final Results</Text>
+        <Text style={styles.title}>Results</Text>
         <Text style={styles.subtitle}>{gameState.totalRounds} Rounds Completed</Text>
 
         {/* Player rankings */}
