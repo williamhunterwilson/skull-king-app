@@ -2,7 +2,6 @@
 # skull-king-app
 App that scores Skull King card game, logs player statistics and keeps a game log.
 =======
-# Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
