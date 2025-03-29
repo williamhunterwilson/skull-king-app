@@ -1,10 +1,12 @@
 {
   "expo": {
-    "name": "SkullKingApp",
+    "name": "Skull King Scorer",
     "slug": "SkullKingApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/skull-king-icon.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#1E1E1E",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,9 +15,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "foregroundImage": "./assets/images/skull-king-icon.png",
+        "backgroundColor": "#1E1E1E"
+      },
+      "package": "com.williamwilson.SkullKingApp"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#1E1E1E",
+      "barStyle": "light-content"
     },
     "web": {
       "bundler": "metro",
@@ -30,12 +37,20 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#1E1E1E"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "d20cf5c9-e252-4f24-9cbf-5a6326156b54"
+      }
     }
   }
 }

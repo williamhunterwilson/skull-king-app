@@ -12,6 +12,9 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+{/* Testing imports */}
+import { render, screen, fireEvent } from '@testing-library/react';
+import Index from './index';
 
 interface GameState {
   players: string[];
