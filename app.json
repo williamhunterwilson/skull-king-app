@@ -2,10 +2,9 @@
   "expo": {
     "name": "Skull King Scorer",
     "slug": "SkullKingApp",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/skull-king-icon.png",
-    "resizeMode": "contain",
     "backgroundColor": "#1E1E1E",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
