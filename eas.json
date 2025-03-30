@@ -14,5 +14,12 @@
     "production": {
       "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "your google/iOS developer API"
+      }
+    }
   }
 }
