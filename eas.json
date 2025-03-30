@@ -14,12 +14,5 @@
     "production": {
       "autoIncrement": true
     }
-  },
-  "submit": {
-    "production": {
-      "android": {
-        "serviceAccountKeyPath": "C:/Users/will_/Code/AndroidStudioProjects/Google Play Developer APIs/linen-rex-429012-k4-736531683027.json"
-      }
-    }
   }
 }
