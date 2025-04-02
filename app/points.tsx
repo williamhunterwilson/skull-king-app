@@ -55,11 +55,11 @@ export default function PointsScreen() {
         setRound(roundNum);
 
         // Ensure round data exists
-        if (parsedGameState.rounds[roundNum]) {
-          const roundData = parsedGameState.rounds[roundNum];
+        if (parsedGameState!.rounds[roundNum]) {
+          const roundData = parsedGameState!.rounds[roundNum];
 
           // Initialize player scores from game state
-          const scores: PlayerScore[] = parsedGameState.players.map(player => {
+          const scores: PlayerScore[] = parsedGameState!.players.map(player => {
             const bid = roundData.bids[player] || 0;
             const existingScore = roundData.scores[player];
 
@@ -106,11 +106,17 @@ export default function PointsScreen() {
     });
   };
 
-  const updateTricksWon = (index: number, value: string) => {
-    const numValue = parseInt(value, 10) || 0;
+  const updateTricksWon = (index: number, increment: boolean) => {
     setPlayerScores(prevScores => {
       const newScores = [...prevScores];
-      newScores[index].tricksWon = numValue;
+      if (increment) {
+        newScores[index].tricksWon += 1;
+      } else {
+        // Ensure tricksWon doesn't go below 0
+        if (newScores[index].tricksWon > 0) {
+          newScores[index].tricksWon -= 1;
+        }
+      }
       return newScores;
     });
   };
@@ -128,7 +134,7 @@ export default function PointsScreen() {
     });
   };
 
-  const calculateScore = (player: PlayerScore, round: round_number): number => {
+  const calculateScore = (player: PlayerScore, round: number): number => {
     let score = 0;
 
     if (player.madeBid) {
@@ -150,35 +156,6 @@ export default function PointsScreen() {
     score += player.bonusPoints;
 
     return score;
-  };
-
-  // Generate round navigation buttons
-  const renderRoundButtons = () => {
-    if (!gameState) return null;
-
-    const buttons = [];
-    for (let i = 1; i <= gameState.totalRounds; i++) {
-      buttons.push(
-        <TouchableOpacity
-          key={i}
-          style={[
-            styles.roundButton,
-            round === i && styles.currentRoundButton
-          ]}
-          onPress={() => navigateToRound(i)}
-        >
-          <Text
-            style={[
-              styles.roundButtonText,
-              round === i && styles.currentRoundButtonText
-            ]}
-          >
-            {i}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-    return buttons;
   };
 
   const navigateToRound = (roundNumber: number) => {
@@ -270,117 +247,87 @@ export default function PointsScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Round {round}/{gameState.totalRounds}</Text>
 
-        {/* Round navigation buttons */}
-        <View style={styles.roundNavigationContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.roundButtonsRow}>
-              {renderRoundButtons()}
-            </View>
-          </ScrollView>
-        </View>
-
+        {/* Player Scores */}
         <FlatList
           data={playerScores}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <View style={styles.scoreRow}>
               <View style={styles.playerInfo}>
-                <Text style={styles.playerName}>{item.name}</Text>
-
-                {/* Bid with + and - buttons */}
+                <View style={styles.nameAndBidContainer}>
+                  <Text style={styles.playerName}>{item.name}</Text>
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.bidLabel}>Made bid:</Text>
+                    <Switch
+                      value={item.madeBid}
+                      onValueChange={() => toggleMadeBid(index)}
+                      trackColor={{ false: "#FF6B6B", true: "#7FFF7F" }}
+                      thumbColor="#FFFFFF"
+                    />
+                  </View>
+                </View>
                 <View style={styles.bidControls}>
-                  <TouchableOpacity
-                    style={styles.bidButton}
-                    onPress={() => updateBid(index, false)} // Decrease bid
-                  >
+                  <TouchableOpacity style={styles.bidButton} onPress={() => updateBid(index, false)}>
                     <Text style={styles.bidButtonText}>−</Text>
                   </TouchableOpacity>
-
                   <Text style={styles.bidValue}>{item.bid}</Text>
-
-                  <TouchableOpacity
-                    style={styles.bidButton}
-                    onPress={() => updateBid(index, true)} // Increase bid
-                  >
+                  <TouchableOpacity style={styles.bidButton} onPress={() => updateBid(index, true)}>
                     <Text style={styles.bidButtonText}>+</Text>
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Rest of the controls for tricks won, made bid, etc... */}
-              <View style={styles.scoreControls}>
-                {/* Made Bid Switch */}
-                <View style={styles.switchContainer}>
-                  <Text style={styles.label}>Made bid:</Text>
-                  <Switch
-                    value={item.madeBid}
-                    onValueChange={() => toggleMadeBid(index)}
-                    trackColor={{ false: "#FF6B6B", true: "#7FFF7F" }}
-                    thumbColor="#FFFFFF"
-                  />
+              <View style={styles.controlsContainer}>
+                {/* Tricks Won */}
+                <View style={styles.tricksContainer}>
+                  <Text style={styles.label}>Tricks Won</Text>
+                  <View style={styles.controlsRow}>
+                    <TouchableOpacity style={styles.tricksButton} onPress={() => updateTricksWon(index, false)}>
+                      <Text style={styles.tricksButtonText}>−</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.tricksValue}>{item.tricksWon}</Text>
+                    <TouchableOpacity style={styles.tricksButton} onPress={() => updateTricksWon(index, true)}>
+                      <Text style={styles.tricksButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
-                {/* Tricks Won (only visible if didn't make bid) */}
-                {!item.madeBid && (
-                  <View style={styles.tricksContainer}>
-                    <Text style={styles.label}>Tricks won:</Text>
-                    <TextInput
-                      style={styles.tricksInput}
-                      keyboardType="numeric"
-                      value={item.tricksWon.toString()}
-                      onChangeText={(value) => updateTricksWon(index, value)}
-                      placeholderTextColor="#888"
-                    />
-                  </View>
-                )}
-
-                {/* Bonus Points */}
+                {/* Bonus */}
                 <View style={styles.bonusContainer}>
-                  <Text style={styles.label}>Bonus:</Text>
-                  <View style={styles.bonusControls}>
-                    <TouchableOpacity
-                      style={styles.bonusButton}
-                      onPress={() => updateBonusPoints(index, false)}
-                    >
+                  <Text style={styles.label}>Bonus</Text>
+                  <View style={styles.controlsRow}>
+                    <TouchableOpacity style={styles.bonusButton} onPress={() => updateBonusPoints(index, false)}>
                       <Text style={styles.bonusButtonText}>−</Text>
                     </TouchableOpacity>
-
                     <Text style={[styles.bonusValue, item.bonusPoints < 0 && styles.negativeBonus]}>
                       {item.bonusPoints}
                     </Text>
-
-                    <TouchableOpacity
-                      style={styles.bonusButton}
-                      onPress={() => updateBonusPoints(index, true)}
-                    >
+                    <TouchableOpacity style={styles.bonusButton} onPress={() => updateBonusPoints(index, true)}>
                       <Text style={styles.bonusButtonText}>+</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
+              </View>
 
-                {/* Score preview */}
-                <View style={styles.scorePreview}>
-                  <Text style={styles.scoreLabel}>Score:</Text>
-                  <Text style={[styles.scoreValue, calculateScore(item, round) < 0 && styles.negativeScore]}>
-                    {calculateScore(item, round)}
-                  </Text>
-                </View>
+              {/* Points Total */}
+              <View style={styles.scorePreview}>
+                <Text style={styles.scoreLabel}>Points Total:</Text>
+                <Text style={[styles.scoreValue, calculateScore(item, round) < 0 && styles.negativeScore]}>
+                  {calculateScore(item, round)}
+                </Text>
               </View>
             </View>
           )}
         />
 
+        {/* Navigation Buttons */}
         <View style={styles.buttonContainer}>
           {round === gameState.totalRounds && (
             <TouchableOpacity
               style={[styles.submitButton, styles.extendButton]}
               onPress={() => {
-                // Extend the game by 1 round
                 if (!gameState) return;
-
-                const updatedGameState = {...gameState};
-
-                // Save current scores
+                const updatedGameState = { ...gameState };
                 playerScores.forEach(player => {
                   if (!updatedGameState.rounds[round].scores) {
                     updatedGameState.rounds[round].scores = {};
@@ -392,13 +339,8 @@ export default function PointsScreen() {
                     bonusPoints: player.bonusPoints
                   };
                 });
-
-                // Increase total rounds
                 updatedGameState.totalRounds += 1;
-
-                // Move to next round
                 updatedGameState.currentRound = round + 1;
-
                 router.push({
                   pathname: "/bidding",
                   params: {
@@ -411,16 +353,11 @@ export default function PointsScreen() {
               <Text style={styles.submitButtonText}>Play Another Round</Text>
             </TouchableOpacity>
           )}
-
           <TouchableOpacity
             style={styles.submitButton}
             onPress={() => {
-              // Update game state with current scores
               if (!gameState) return;
-
-              const updatedGameState = {...gameState};
-
-              // Save scores
+              const updatedGameState = { ...gameState };
               playerScores.forEach(player => {
                 if (!updatedGameState.rounds[round].scores) {
                   updatedGameState.rounds[round].scores = {};
@@ -432,9 +369,7 @@ export default function PointsScreen() {
                   bonusPoints: player.bonusPoints
                 };
               });
-
               if (round < updatedGameState.totalRounds) {
-                // Move to next round
                 updatedGameState.currentRound = round + 1;
                 router.push({
                   pathname: "/bidding",
@@ -444,7 +379,6 @@ export default function PointsScreen() {
                   }
                 });
               } else {
-                // Game is over, navigate to results
                 router.push({
                   pathname: "/results",
                   params: {
@@ -462,6 +396,8 @@ export default function PointsScreen() {
       </View>
     </SafeAreaView>
   );
+
+
 }
 
 const styles = StyleSheet.create({
@@ -481,34 +417,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     textAlign: "center"
   },
-  roundNavigationContainer: {
-    marginBottom: 15,
-  },
-  roundButtonsRow: {
-    flexDirection: 'row',
-    paddingVertical: 5,
-  },
-  roundButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#333",
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  currentRoundButton: {
-    backgroundColor: "#505050",
-  },
-  roundButtonText: {
-    color: "#BBBBBB",
-    fontWeight: "bold",
-  },
-  currentRoundButtonText: {
-    color: "#FFFFFF",
-  },
   scoreRow: {
     padding: 15,
+    paddingTop: 5,
     backgroundColor: "#2A2A2A",
     marginBottom: 12,
     borderRadius: 10,
@@ -516,41 +427,46 @@ const styles = StyleSheet.create({
   playerInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#444",
-    paddingBottom: 8,
+  },
+  nameAndBidContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   playerName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "500",
-    color: "#FFFFFF"
+    color: "#FFFFFF",
+    marginRight: 10,
   },
   bidInfo: {
     color: "#BBBBBB",
     fontSize: 16,
   },
-  scoreControls: {
-    gap: 12,
-  },
-  switchContainer: {
+ switchContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   tricksContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
   },
   bonusContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
   },
   label: {
     color: "#FFFFFF",
     fontSize: 16,
+  },
+  bidLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginLeft: 30,
   },
   tricksInput: {
     width: 60,
@@ -594,9 +510,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: "#444",
     paddingTop: 8,
   },
   scoreLabel: {
@@ -613,6 +526,7 @@ const styles = StyleSheet.create({
     color: "#FF6666"
   },
   submitButton: {
+    flex: 1,
     backgroundColor: "#505050",
     padding: 15,
     borderRadius: 10,
@@ -627,25 +541,16 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
   },
   extendButton: {
     flex: 1,
     marginRight: 10,
     backgroundColor: "#3D3D3D",
   },
-  submitButton: {
-    flex: 1,
-    backgroundColor: "#505050",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
   bidControls: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 10,
   },
   bidButton: {
     width: 36,
@@ -665,5 +570,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginHorizontal: 20,
+  },
+  controlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 5,
+  },
+  tricksButton: {
+    width: 36,
+    height: 36,
+    backgroundColor: "#505050",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  tricksButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF"
+  },
+  tricksValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginHorizontal: 10,
+    minWidth: 40,
+    textAlign: "center",
+    color: "#FFFFFF"
+  },
+  controlsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    borderBottomWidth: 1,
+    borderBottomColor: "#444",
+    paddingBottom: 10,
   },
 });
