@@ -24,6 +24,7 @@ interface GameState {
       madeBid: boolean;
       tricksWon: number;
       bonusPoints: number;
+      totalPoints: number;
     }>;
   }>;
 }
@@ -54,27 +55,6 @@ export default function ResultsScreen() {
     }
   }, [gameState, playerResults]);
 
-  const calculateScore = (player: string, round: number, roundData: any): number => {
-    const scoreData = roundData.scores[player];
-    if (!scoreData) return 0;
-
-    let score = 0;
-
-    if (scoreData.madeBid) {
-      // Made bid: 20 points + 10 points per trick
-      score = 20 + (scoreData.bid * 10);
-    } else {
-      // Missed bid: -10 points per trick difference
-      const difference = Math.abs(scoreData.bid - scoreData.tricksWon);
-      score = -(difference * 10);
-    }
-
-    // Add bonus points
-    score += scoreData.bonusPoints || 0;
-
-    return score;
-  };
-
   const calculateFinalScores = (gameState: GameState) => {
     const { players, rounds, totalRounds } = gameState;
 
@@ -85,7 +65,8 @@ export default function ResultsScreen() {
       // Calculate score for each round
       for (let i = 1; i <= totalRounds; i++) {
         if (rounds[i] && rounds[i].scores && rounds[i].scores[player]) {
-          const roundScore = calculateScore(player, i, rounds[i]);
+          // Use the totalPoints value already stored in the game state
+          const roundScore = rounds[i].scores[player].totalPoints || 0;
           totalScore += roundScore;
           roundScores.push(roundScore);
         } else {

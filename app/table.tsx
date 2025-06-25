@@ -9,8 +9,12 @@ import {
     StatusBar,
     Platform,
     Alert,
+    Dimensions,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, Stack } from 'expo-router';
+
+const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
 
 interface GameState {
     players: string[];
@@ -139,7 +143,16 @@ default: return '#333';
 }
 };
 
+// Calculate dynamic player cell width to ensure table fits within screen
+const ROUND_CELL_WIDTH = 60; // Fixed width for round column
+const HORIZONTAL_PADDING = 20; // Total horizontal padding for the container (10px on each side)
+const BORDER_WIDTH = gameState.players.length + 1; // Account for border widths
+const availableWidth = screenWidth - ROUND_CELL_WIDTH - HORIZONTAL_PADDING - BORDER_WIDTH;
+const playerCellWidth = Math.floor(availableWidth / gameState.players.length);
+
 return (
+<>
+<Stack.Screen options={{ headerShown: false }} />
 <SafeAreaView style={styles.container}>
 <StatusBar barStyle="light-content" backgroundColor="#1E1E1E" />
 
@@ -148,21 +161,21 @@ return (
 <Text style={styles.subtitle}>Rounds: {gameState.totalRounds}</Text>
 </View>
 
-<ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.horizontalScroll}>
-<View>
+<View style={styles.tableContainer}>
+<View style={styles.tableWrapper}>
 {/* Header Row */}
 <View style={styles.tableRow}>
 <View style={[styles.cell, styles.headerCell, styles.roundNameCell]}>
 <Text style={styles.headerText}>Round</Text>
 </View>
 {gameState.players.map((player, index) => (
-<View key={index} style={[styles.cell, styles.headerCell, styles.playerCell]}>
-<Text style={styles.headerText}>{player}</Text>
+<View key={index} style={[styles.cell, styles.headerCell, styles.playerCell, { width: playerCellWidth }]}>
+<Text style={styles.headerText} numberOfLines={1} ellipsizeMode="tail">{player}</Text>
 </View>
 ))}
 </View>
 
-<ScrollView showsVerticalScrollIndicator={true}>
+<ScrollView showsVerticalScrollIndicator={true} style={styles.verticalScroll}>
 {/* Round Rows */}
 {Array.from({ length: gameState.totalRounds }, (_, i) => i + 1).map((round) => (
 <View key={round} style={styles.tableRow}>
@@ -178,10 +191,10 @@ key={playerIndex}
 style={[
 styles.cell,
 styles.playerCell,
-{ backgroundColor: getCellBackgroundColor(round) }
+{ backgroundColor: getCellBackgroundColor(round), width: playerCellWidth }
 ]}
 >
-<Text style={styles.cellText}>
+<Text style={styles.cellText} numberOfLines={1}>
 {getRoundDisplayValue(player, round)}
 </Text>
 </View>
@@ -195,7 +208,7 @@ styles.playerCell,
 <Text style={styles.totalHeaderText}>Total</Text>
 </View>
 {gameState.players.map((player, playerIndex) => (
-<View key={playerIndex} style={[styles.cell, styles.playerCell, styles.totalCell]}>
+<View key={playerIndex} style={[styles.cell, styles.playerCell, styles.totalCell, { width: playerCellWidth }]}>
 <Text style={styles.totalText}>
 {calculateRunningTotal(player, gameState.totalRounds)}
 </Text>
@@ -204,7 +217,7 @@ styles.playerCell,
 </View>
 </ScrollView>
 </View>
-</ScrollView>
+</View>
 
 <View style={styles.footer}>
 <TouchableOpacity style={styles.addRoundButton} onPress={addRound}>
@@ -215,12 +228,8 @@ styles.playerCell,
 <Text style={styles.buttonText}>View Results</Text>
 </TouchableOpacity>
 </View>
-
-{/* Legend */}
-<View style={styles.legend}>
-<Text style={styles.legendText}>Legend: - = Not Started, B:X = Bid X, Number = Round Score</Text>
-</View>
 </SafeAreaView>
+</>
 );
 }
 
@@ -244,8 +253,16 @@ subtitle: {
 fontSize: 16,
 color: '#CCCCCC',
 },
-horizontalScroll: {
+tableContainer: {
 flex: 1,
+alignItems: 'center',
+paddingHorizontal: 10,
+},
+tableWrapper: {
+alignSelf: 'center',
+},
+verticalScroll: {
+flex: 1, // Take up available space in the table container
 },
 tableRow: {
 flexDirection: 'row',
@@ -260,16 +277,17 @@ borderColor: '#444',
 justifyContent: 'center',
 alignItems: 'center',
 minHeight: 50,
+paddingHorizontal: 4,
 },
 headerCell: {
 backgroundColor: '#2A2A2A',
 },
 roundNameCell: {
-width: 80,
-paddingHorizontal: 8,
+width: 60,
+paddingHorizontal: 4,
 },
 playerCell: {
-width: 100,
+// Width will be set dynamically
 },
 totalCell: {
 backgroundColor: '#3A3A3A',
@@ -280,29 +298,29 @@ backgroundColor: '#3A3A3A',
 headerText: {
 color: '#FFFFFF',
 fontWeight: 'bold',
-fontSize: 14,
+fontSize: 12,
 textAlign: 'center',
 },
 roundText: {
 color: '#FFFFFF',
 fontWeight: 'bold',
-fontSize: 13,
+fontSize: 12,
 textAlign: 'center',
 },
 cellText: {
 color: '#FFFFFF',
-fontSize: 12,
+fontSize: 11,
 textAlign: 'center',
 },
 totalText: {
 color: '#FFFFFF',
 fontWeight: 'bold',
-fontSize: 14,
+fontSize: 13,
 },
 totalHeaderText: {
 color: '#FFFFFF',
 fontWeight: 'bold',
-fontSize: 14,
+fontSize: 13,
 },
 footer: {
 flexDirection: 'row',
@@ -331,16 +349,6 @@ buttonText: {
 color: '#FFFFFF',
 fontWeight: 'bold',
 fontSize: 16,
-},
-legend: {
-padding: 10,
-paddingBottom: 20,
-alignItems: 'center',
-},
-legendText: {
-color: '#CCCCCC',
-fontSize: 12,
-textAlign: 'center',
 },
 errorText: {
 color: '#FFFFFF',
