@@ -84,92 +84,50 @@ export default function BiddingScreen() {
     });
   };
 
-  // Generate round navigation buttons
-  const renderRoundButtons = () => {
-    if (!gameState) return null;
-
-    const buttons = [];
-    for (let i = 1; i <= gameState.totalRounds; i++) {
-      buttons.push(
-        <TouchableOpacity
-          key={i}
-          style={[
-            styles.roundButton,
-            round === i && styles.currentRoundButton
-          ]}
-          onPress={() => navigateToRound(i)}
-        >
-          <Text
-            style={[
-              styles.roundButtonText,
-              round === i && styles.currentRoundButtonText
-            ]}
-          >
-            {i}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-    return buttons;
-  };
-
-  const navigateToRound = (roundNumber: number) => {
-    if (!gameState) return;
-
-    // Update current game state with current bids
-    const updatedGameState = {...gameState};
-
-    // Save current round data before navigating
-    if (!updatedGameState.rounds[round]) {
-      updatedGameState.rounds[round] = { bids: {}, scores: {} };
-    }
-
-    playerBids.forEach(player => {
-      if (!updatedGameState.rounds[round].bids) {
-        updatedGameState.rounds[round].bids = {};
-      }
-      updatedGameState.rounds[round].bids[player.name] = player.bid;
-    });
-
-    updatedGameState.currentRound = roundNumber;
-
-    // Navigate to the selected round
-    router.push({
-      pathname: "/bidding",
-      params: {
-        gameState: JSON.stringify(updatedGameState),
-        round: roundNumber.toString()
-      }
-    });
-  };
-
   const submitBids = () => {
-    if (!gameState) return;
+      if (!gameState) return;
 
-    // Update game state with current bids
-    const updatedGameState = {...gameState};
+      const newRounds = { ...gameState.rounds };
 
-    // Ensure round data structure exists
-    if (!updatedGameState.rounds[round]) {
-      updatedGameState.rounds[round] = { bids: {}, scores: {} };
-    }
-
-    // Save bids to game state
-    playerBids.forEach(player => {
-      if (!updatedGameState.rounds[round].bids) {
-        updatedGameState.rounds[round].bids = {};
+      // Create or update the round data
+      if (!newRounds[round]) {
+        newRounds[round] = { bids: {}, scores: {} };
       }
-      updatedGameState.rounds[round].bids[player.name] = player.bid;
-    });
 
-    // Navigate to points screen with updated game state
-    router.push({
-      pathname: "/points",
-      params: {
-        gameState: JSON.stringify(updatedGameState),
-        round: round.toString()
+      // Update bids
+      const bids: Record<string, number> = {};
+      playerBids.forEach(playerBid => {
+        bids[playerBid.name] = playerBid.bid;
+      });
+      newRounds[round].bids = bids;
+
+      const updatedGameState = {
+          ...gameState,
+          rounds: newRounds
+      };
+
+      // Check if we should return to table or go to points
+      const returnTo = params.returnTo as string;
+      if (returnTo === "table") {
+          // Go to points screen
+        router.push({
+          pathname: "/points",
+          params: {
+              gameState: JSON.stringify(updatedGameState),
+              round: round.toString(),
+              returnTo: "table"
+            }
+        });
+      } else {
+          // Original behavior
+          router.push({
+              pathname: "/points",
+              params: {
+              gameState: JSON.stringify(updatedGameState),
+              round: round.toString()
+             }
+          });
       }
-    });
   };
 
   // If game state is not loaded yet
@@ -188,16 +146,6 @@ export default function BiddingScreen() {
       <StatusBar barStyle="light-content" backgroundColor="#1E1E1E" />
       <View style={styles.content}>
         <Text style={styles.title}>Round {round}/{gameState.totalRounds}</Text>
-
-        {/* Round navigation buttons */}
-        <View style={styles.roundNavigationContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.roundButtonsRow}>
-              {renderRoundButtons()}
-            </View>
-          </ScrollView>
-        </View>
-
         <Text style={styles.subtitle}>Enter bids for each player:</Text>
 
         <FlatList
@@ -318,30 +266,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  roundNavigationContainer: {
-    marginBottom: 15,
-  },
-  roundButtonsRow: {
-    flexDirection: 'row',
-    paddingVertical: 5,
-  },
-  roundButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#333",
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  currentRoundButton: {
-    backgroundColor: "#505050",
-  },
-  roundButtonText: {
-    color: "#BBBBBB",
-        fontWeight: "bold",
-  },
-  currentRoundButtonText: {
-    color: "#FFFFFF",
-  }
 });

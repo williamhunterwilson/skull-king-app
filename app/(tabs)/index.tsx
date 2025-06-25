@@ -80,20 +80,19 @@ export default function PlayerEntry(): JSX.Element {
   };
 
   const startGame = () => {
-    const totalRounds = parseInt(rounds, 10) || 10;
-    const gameState: GameState = {
-      players: players,
-      totalRounds: totalRounds,
-      currentRound: 1,
-      rounds: {}
-    };
-    router.push({
-      pathname: "/bidding",
-      params: {
-        gameState: JSON.stringify(gameState),
-        round: "1"
-      }
-    });
+      const totalRounds = parseInt(rounds, 10) || 10;
+      const gameState: GameState = {
+          players: players,
+          totalRounds: totalRounds,
+          currentRound: 1,
+          rounds: {}
+      };
+      router.push({
+          pathname: "/table", // Changed from "/bidding" to "/table"
+          params: {
+          gameState: JSON.stringify(gameState)
+          }
+      });
   };
 
   return (

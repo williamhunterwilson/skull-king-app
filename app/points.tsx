@@ -158,77 +158,65 @@ export default function PointsScreen() {
     return score;
   };
 
-  const navigateToRound = (roundNumber: number) => {
-    if (!gameState) return;
+    const submitScores = () => {
+        if (!gameState) return;
 
-    // Update current game state with current scores
-    const updatedGameState = {...gameState};
+        const newRounds = { ...gameState.rounds };
 
-    // Save current round data before navigating
-    if (!updatedGameState.rounds[round]) {
-      updatedGameState.rounds[round] = { bids: {}, scores: {} };
-    }
-
-    // Save scores
-    playerScores.forEach(player => {
-      if (!updatedGameState.rounds[round].scores) {
-        updatedGameState.rounds[round].scores = {};
-      }
-      updatedGameState.rounds[round].scores[player.name] = {
-        bid: player.bid,
-        madeBid: player.madeBid,
-        tricksWon: player.tricksWon,
-        bonusPoints: player.bonusPoints
-      };
-    });
-
-    updatedGameState.currentRound = roundNumber;
-
-    // Navigate to bidding for the selected round
-    router.push({
-      pathname: "/bidding",
-      params: {
-        gameState: JSON.stringify(updatedGameState),
-        round: roundNumber.toString()
-      }
-    });
-  };
-
-  const submitScores = () => {
-    if (!gameState) return;
-
-    // Update game state with current scores
-    const updatedGameState = {...gameState};
-
-    // Save scores
-    playerScores.forEach(player => {
-      if (!updatedGameState.rounds[round].scores) {
-        updatedGameState.rounds[round].scores = {};
-      }
-      updatedGameState.rounds[round].scores[player.name] = {
-        bid: player.bid,
-        madeBid: player.madeBid,
-        tricksWon: player.tricksWon,
-        bonusPoints: player.bonusPoints
-      };
-    });
-
-    // Determine next action
-    if (round < updatedGameState.totalRounds) {
-      // Move to next round
-      updatedGameState.currentRound = round + 1;
-      router.push({
-        pathname: "/bidding",
-        params: {
-          gameState: JSON.stringify(updatedGameState),
-          round: (round + 1).toString()
+        // Ensure round exists
+        if (!newRounds[round]) {
+            newRounds[round] = { bids: {}, scores: {} };
         }
-      });
-    } else {
-      // Game is over, navigate to results or back to start
-      router.push("/");
-    }
-  };
+
+        // Calculate and store scores
+        const scores: Record<string, any> = {};
+        playerScores.forEach(playerScore => {
+            const totalPoints = calculateScore(playerScore, round);
+            scores[playerScore.name] = {
+                bid: playerScore.bid,
+                madeBid: playerScore.madeBid,
+                tricksWon: playerScore.tricksWon,
+                bonusPoints: playerScore.bonusPoints,
+                totalPoints: totalPoints
+            };
+        });
+
+        newRounds[round].scores = scores;
+
+        const updatedGameState = {
+            ...gameState,
+            rounds: newRounds
+        };
+
+        // Check if we should return to table
+        const returnTo = params.returnTo as string;
+        if (returnTo === "table") {
+            router.push({
+                pathname: "/table",
+                params: {
+                    gameState: JSON.stringify(updatedGameState)
+                }
+            });
+        } else {
+            // Original behavior - determine next round or go to results
+            if (round < gameState.totalRounds) {
+                router.push({
+                pathname: "/bidding",
+                params: {
+                    gameState: JSON.stringify(updatedGameState),
+                    round: (round + 1).toString()
+                    }
+                });
+            } else {
+                router.push({
+                    pathname: "/results",
+                    params: {
+                    gameState: JSON.stringify(updatedGameState)
+                    }
+                });
+            }
+        }
+    };
 
   // If game state is not loaded yet
   if (!gameState) {
@@ -355,41 +343,10 @@ export default function PointsScreen() {
           )}
           <TouchableOpacity
             style={styles.submitButton}
-            onPress={() => {
-              if (!gameState) return;
-              const updatedGameState = { ...gameState };
-              playerScores.forEach(player => {
-                if (!updatedGameState.rounds[round].scores) {
-                  updatedGameState.rounds[round].scores = {};
-                }
-                updatedGameState.rounds[round].scores[player.name] = {
-                  bid: player.bid,
-                  madeBid: player.madeBid,
-                  tricksWon: player.tricksWon,
-                  bonusPoints: player.bonusPoints
-                };
-              });
-              if (round < updatedGameState.totalRounds) {
-                updatedGameState.currentRound = round + 1;
-                router.push({
-                  pathname: "/bidding",
-                  params: {
-                    gameState: JSON.stringify(updatedGameState),
-                    round: (round + 1).toString()
-                  }
-                });
-              } else {
-                router.push({
-                  pathname: "/results",
-                  params: {
-                    gameState: JSON.stringify(updatedGameState)
-                  }
-                });
-              }
-            }}
+            onPress={submitScores}
           >
             <Text style={styles.submitButtonText}>
-              {round < gameState.totalRounds ? "Next Round" : "Finish Game"}
+              {params.returnTo === "table" ? "Save & Return to Table" : (round < gameState.totalRounds ? "Next Round" : "Finish Game")}
             </Text>
           </TouchableOpacity>
         </View>

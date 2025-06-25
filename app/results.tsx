@@ -163,7 +163,7 @@ export default function ResultsScreen() {
           if (playerResult) {
             existingStats[player].gamesPlayed++;
             existingStats[player].totalScore += playerResult.totalScore;
-            
+
             if (player === gameSummary.winner) {
               existingStats[player].wins++;
             } else {
